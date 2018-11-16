@@ -1,0 +1,2 @@
+[global.databases]
+social_db = { url = "/home/yunlong/Repositories/social_feed/development.sqlite3" }
