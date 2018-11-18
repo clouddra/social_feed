@@ -1,16 +1,17 @@
 [package]
 name = "social_feed"
 version = "0.1.0"
-authors = ["Yun Long <chong.yunlong@nutonomy.com>"]
+authors = ["Yun Long <chong.yunlong@gmail.com>"]
 edition = "2018"
 
 [dependencies]
 rocket = "0.4.0-rc.1"
-diesel = { version = "1.0.0", features = ["sqlite"]}
+diesel = { version = "1.0.0", features = ["sqlite", "chrono"]}
 dotenv = "0.9.0"
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
 
 [dependencies.rocket_contrib]
 version = "0.4.0-rc.1"

@@ -1,2 +1,5 @@
 [global.databases]
-social_db = { url = "/home/yunlong/Repositories/social_feed/development.sqlite3" }
+social_db = { url = "development.sqlite3" }
+
+[development]
+scheme_authority = "http://localhost:8000"
