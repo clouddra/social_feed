@@ -1,6 +1,5 @@
-use rocket_contrib::databases::diesel;
-use diesel::QueryDsl;
-use diesel::RunQueryDsl;
+#![allow(proc_macro_derive_resolution_fallback)]
+use chrono::NaiveDateTime;
 
 #[derive(Queryable, Serialize)]
 #[table_name = "users"]
@@ -9,12 +8,29 @@ pub struct User {
     pub name: String
 }
 
-impl User {
-    pub fn by_id(conn: &diesel::SqliteConnection, user_id: i32) -> User {
-        use crate::schema::users::dsl::*;
+#[derive(Deserialize)]
+pub struct NewLike {
+    pub object: String,
+    pub target: String,
+}
 
-        users.find(user_id)
-            .get_result(conn)
-            .expect(&format!("Unable to find post {}", user_id))
-    }
+#[derive(Deserialize)]
+pub struct NewShare {
+    pub object: String,
+    pub target: String,
+}
+
+#[derive(Deserialize)]
+pub struct NewPost {
+    pub object: String
+}
+
+#[derive(Queryable, Serialize)]
+#[table_name = "activities"]
+pub struct Activity {
+    pub actor: String,
+    pub object: String,
+    pub target: Option<String>,
+    pub verb: String,
+    pub created_at: Option<NaiveDateTime>,
 }

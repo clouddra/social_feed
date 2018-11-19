@@ -11,13 +11,11 @@ mod schema;
 mod views;
 mod models;
 mod repository;
-
-#[database("social_db")]
-pub struct SocialDbConn(diesel::SqliteConnection);
+mod db;
 
 fn main() {
     rocket::ignite()
-        .attach(SocialDbConn::fairing())
+        .attach(db::SocialDbConn::fairing())
         .mount("/", routes![
             controller::follow,
             controller::unfollow,
