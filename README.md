@@ -12,7 +12,7 @@
 ### Building and running project in development
 
 1. Refer to Diesel website for instructions on how to run migrations
-2. Use [seed/seed.sql](seed/seed.sql) to seed `development.sqlite3` database
+2. Use [seed/seed.sql](sql_scripts/seed.sql) to seed `development.sqlite3` database
 
 ### Design
 

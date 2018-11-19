@@ -6,7 +6,8 @@ INSERT INTO users(name) VALUES('eric');
 INSERT INTO users(name) VALUES('niko');
 
 DELETE FROM follows;
---peter -> paul, ivan, niko
+-- peter -> paul, ivan, niko
+-- paul -> ivan, eric
 INSERT INTO follows VALUES(1, 2);
 INSERT INTO follows VALUES(1, 5);
 INSERT INTO follows VALUES(2, 3);

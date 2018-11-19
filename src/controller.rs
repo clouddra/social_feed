@@ -7,6 +7,7 @@ use chrono::Utc;
 use chrono::prelude::*;
 use chrono::NaiveDateTime;
 use diesel::result::Error;
+use crate::repository::Activity;
 
 /// ### Perfomance
 ///
@@ -61,8 +62,8 @@ pub fn post(conn: SocialDbConn, user: &RawStr, post: Json<repository::NewPost>) 
     }
 }
 
-#[get("/<user>/my_feed?<created_before>")]
-pub fn my_feed(conn: SocialDbConn, user: &RawStr, created_before: Option<i64>) -> Json<Vec<repository::Activity>> {
+#[get("/<user>/feed?<created_before>")]
+pub fn my_feed(conn: SocialDbConn, user: &RawStr, created_before: Option<i64>) -> Result<Json<Vec<Activity>>, Status> {
 //    round to nearest 10 sec for more stable caching
     let nearest_10_sec = match created_before {
         Some(timestamp) => timestamp,
@@ -71,11 +72,16 @@ pub fn my_feed(conn: SocialDbConn, user: &RawStr, created_before: Option<i64>) -
             now - now % 10
         }
     };
-    Json(repository::user_feed(&conn, user.as_str(), NaiveDateTime::from_timestamp(nearest_10_sec, 0)))
+    let feed_result = repository::user_feed(&conn, user.as_str(), NaiveDateTime::from_timestamp(nearest_10_sec, 0));
+    match feed_result {
+        Ok(feed) => Ok(Json(feed)),
+        Err(diesel::result::Error::NotFound) => Err(Status::NotFound),
+        _ => Err(Status::NotFound),
+    }
 }
 
 #[get("/<user>/feed/friends?<created_before>")]
-pub fn friends_feed(conn: SocialDbConn, user: &RawStr, created_before: Option<i64>) -> Json<Vec<repository::Activity>> {
+pub fn friends_feed(conn: SocialDbConn, user: &RawStr, created_before: Option<i64>) -> Result<Json<Vec<Activity>>, Status> {
 //    round to nearest 10 sec for more stable caching
     let nearest_10_sec = match created_before {
         Some(timestamp) => timestamp,
@@ -84,5 +90,10 @@ pub fn friends_feed(conn: SocialDbConn, user: &RawStr, created_before: Option<i6
             now - now % 10
         }
     };
-    Json(repository::follows_feed(&conn, user.as_str(), NaiveDateTime::from_timestamp(nearest_10_sec, 0)))
+    let feed_result = repository::friends_feed(&conn, user.as_str(), NaiveDateTime::from_timestamp(nearest_10_sec, 0));
+    match feed_result {
+        Ok(feed) => Ok(Json(feed)),
+        Err(diesel::result::Error::NotFound) => Err(Status::NotFound),
+        _ => Err(Status::NotFound),
+    }
 }

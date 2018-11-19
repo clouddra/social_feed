@@ -1,12 +1,11 @@
 use crate::schema::*;
 
 table! {
-    activities (id, activity_type) {
-        id -> Integer,
-        actor -> Integer,
+    activities (actor, object, verb) {
+        actor -> Text,
         object -> Text,
-        target -> Nullable<Integer>,
-        activity_type -> Text,
+        target -> Nullable<Text>,
+        verb -> Text,
         created_at -> Nullable<Timestamp>,
     }
 }

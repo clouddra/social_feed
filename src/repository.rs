@@ -32,36 +32,15 @@ pub struct User {
     pub name: String,
 }
 
-#[derive(Identifiable, Queryable, Associations, PartialEq, Debug, Serialize)]
+#[derive(Queryable, PartialEq, Debug, Serialize)]
 #[belongs_to(User, foreign_key = "actor")]
 #[table_name = "activities"]
 pub struct Activity {
-    #[serde(skip)]
-    pub id: i32,
-    pub actor: i32,
+    pub actor: String,
     pub object: String,
-    pub target: Option<i32>,
-    pub activity_type: String,
+    pub target: Option<String>,
+    pub verb: String,
     pub created_at: Option<NaiveDateTime>,
-}
-
-#[derive(Serialize)]
-pub struct ActivityWithUserName {
-    actor: String,
-    object: String,
-    target: String,
-    activity_type: String,
-    created_at: Option<NaiveDateTime>,
-}
-
-impl ActivityWithUserName {
-    fn new(actor: String,
-           object: String,
-           target: String,
-           activity_type: String,
-           created_at: Option<NaiveDateTime>) {
-        ActivityWithUserName { actor, object, target, activity_type, created_at };
-    }
 }
 
 pub fn follow(conn: &diesel::SqliteConnection, follower: &str, followed: &str) -> QueryResult<usize> {
@@ -119,55 +98,26 @@ pub fn add_post(conn: &diesel::SqliteConnection, actor: &str, post: &NewPost) ->
         .execute(conn)
 }
 
-pub fn user_feed(conn: &diesel::SqliteConnection, user: &str, before: NaiveDateTime) -> Vec<Activity> {
-//    let user_id = user_id_by_name(conn, user);
-//    activities::table.inner_join(user::table.on(users::name.eq(user)))
-    let a = activities::table
-        .filter(activities::created_at.lt(before))
+pub fn user_feed(conn: &diesel::SqliteConnection, user: &str, before: NaiveDateTime) -> QueryResult<Vec<Activity>> {
+    activities_before(&before)
+        .filter(activities::actor.eq(user))
         .order(activities::created_at.desc())
         .limit(10)
-        .inner_join(
-            users::table.on(users::id.eq(activities::actor)))
-        .filter(users::name.eq(user))
-        .load::<(Activity, User)>(conn)
-        .expect("error loading feed");
-
-    a.into_iter().map(|t| t.0).collect()
+        .load::<Activity>(conn)
 }
 
-pub fn follows_feed(conn: &diesel::SqliteConnection, user: &str, before: NaiveDateTime) -> Vec<Activity> {
+pub fn friends_feed(conn: &diesel::SqliteConnection, user: &str, before: NaiveDateTime) -> QueryResult<Vec<Activity>> {
     let user_id: i32 = user_id_by_name(conn, user).expect("gg");
-
-//    let activities = activities_before(&before)
-//        .inner_join(follows::table.inner_join(
-//            users::table.on(users::id.eq(follows::followed)))
-//            .on(activities::actor.eq(follows::followed)))
-//        .filter(follows::follower.eq(user_id))
-//        .select((activities::all_columns, users::all_columns))
-//        .load::<(Activity, User)>(conn)
-//        .expect("error loading feed");
-    let activities = follows::table
+    let friends = follows::table
         .filter(follows::follower.eq(user_id))
-        .inner_join(activities::table.on(activities::actor.eq(follows::followed)))
-        .inner_join(users::table.on(users::id.eq(follows::followed)))
-        .select((activities::all_columns, users::all_columns))
-        .load::<(Activity, User)>(conn)
-        .expect("err");
+        .inner_join(users::table.on(users::id.eq(follows::follower)))
+        .select(users::name)
+        .load::<String>(conn)?;
 
-    activities
-        .into_iter()
-        .map(|t: (Activity, User)| {
-//            let act = t.0;
-//            ActivityWithUserName::new(act.actor, act.object, act.target, act.activity_type, act.created_at)
-            t.0.created_at.and_then(|x| {
-                println!("dddd {}", x.timestamp());
-                Some(5)
-            });
-            println!("{}, {}", t.0.actor, t.1.name);
-            t.0
-        })
-        .collect()
-//    activities
+    activities_before(&before)
+        .filter(activities::actor.eq_any(friends))
+        .limit(10)
+        .load::<Activity>(conn)
 }
 
 fn activities_before(timestamp: &NaiveDateTime) -> activities::BoxedQuery<diesel::sqlite::Sqlite> {
